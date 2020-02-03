@@ -25,9 +25,6 @@ void setup() {
   Serial.println();
   Serial.print("Conectado con IP ");
   Serial.println(WiFi.localIP());
-}
-
-void loop() {
   Serial.print("Conectando al servidor OBD2 ");
   Serial.print(host);
   Serial.print(":");
@@ -40,4 +37,29 @@ void loop() {
     Serial.println("Reintentando conexión al servidor");
   }
   Serial.println("Conexión establecida al servidor");
+  unsigned long timeout = millis();
+  while (client.available() == 0)
+  {
+    if (millis() - timeout > 5000)
+    {
+      Serial.println("Timeout sin respuesta, terminando conexión");
+      client.stop();
+      return;
+    }
+  }
+  while (client.available())
+  {
+    char ch = static_cast<char>(client.read());
+    Serial.print(ch);
+  }
+  Serial.println();
+  Serial.println("Cerrando conexión con servidor OBD2");
+  if (client.connected())
+  {
+    client.stop();
+  }
+  
+}
+
+void loop() {
 }
