@@ -1,27 +1,37 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-#include <string.h>
 
-#ifndef STASSID
 #define STASSID "WiFi_OBDII"
 #define STAPSK ""
-#endif
+
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
 const char* host = "192.168.0.10";
 const uint16_t port = 35000;
+WiFiClient client;
 
-void writeELMread(WiFiClient client, String PID="WS", uint16_t delSp = 500) {
+void writeELMread(String PID="WS", uint16_t timeOUT = 5000) {
 	if (client.connected())
 	{
 		String sentToElm = "AT"+ PID +'\r';
 		client.print(sentToElm);
+		unsigned uint_16t t0 = millis();
+		unsigned uint_16t t1;
 		Serial.println("Enviado a ELM: "+sentToElm);
-		delay(delSp);
+		while (!client.available()){
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido respuesta de ELM");
+				break
+			}
+		}
 		while (client.available()){
+			if (client.find('>'))
+			{
 			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de ELM: "+line);
+			}
 		}
 	}
 	else
@@ -30,16 +40,27 @@ void writeELMread(WiFiClient client, String PID="WS", uint16_t delSp = 500) {
 	}
 }
 
-void writeOBDread(WiFiClient client,String PID="", uint16_t delSp = 500) {
+void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
 		String sentToOBD = PID+'\r';
 		client.print(sentToOBD);
+		unsigned uint_16t t0 = millis();
+		unsigned uint_16t t1;
 		Serial.println("Enviado a OBD: "+sentToOBD);
-		delay(delSp);
+		while (!client.available()){
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido respuesta de OBD");
+				break
+			}
+		}
 		while (client.available()){
+			if (client.find('>'))
+			{
 			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de OBD: "+line);
+			}
 		}
 	}
 	else
@@ -49,99 +70,51 @@ void writeOBDread(WiFiClient client,String PID="", uint16_t delSp = 500) {
 }
 
 void setup() {
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("#OBD2WiFi#");
+	Serial.begin(115200);
+	Serial.println();
+	Serial.println("#OBD2WiFi#");
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid,password);
+	WiFi.mode(WIFI_STA);
+	WiFi.begin(ssid,password);
 
-  Serial.print("Conectando a módulo OBD2...");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
+	Serial.print("Conectando a módulo OBD2...");
+	while (WiFi.status() != WL_CONNECTED)
+	{
+    delay(200);
     Serial.print(".");
   }
-  Serial.println();
-  Serial.print("Conectado con IP ");
-  Serial.println(WiFi.localIP());
-  Serial.print("Conectando al servidor OBD2 ");
-  Serial.print(host);
-  Serial.print(":");
-  Serial.println(port);
+	Serial.println();
+	Serial.print("Conectado con IP ");
+	Serial.println(WiFi.localIP());
+	Serial.print("Conectando al servidor OBD2 ");
+	Serial.print(host);
+	Serial.print(":");
+	Serial.println(port);
 
-  WiFiClient client;
-
-  while (!client.connect(host,port))
-  {
-    Serial.println("Error conectando al servidor OBD2");
-    delay(2000);
-    Serial.println("Reintentando conexión al servidor");
-  }
-  Serial.print("Conexión establecida al servidor");
-  delay(1000);
+	while (!client.connect(host,port))
+	{
+		Serial.println("Error conectando al servidor OBD2");
+		delay(2000);
+		Serial.println("Reintentando conexión al servidor");
+	}
+	Serial.println("Conexión establecida al servidor");
+	delay(1000);
   
-  writeELMread(client,"Z");
-  writeELMread(client,"M0");
-  Serial.println("Detectando protocolo OBD...");
-  writeELMread(client,"TP0",4000);
-  writeELMread(client,"DP");
-  writeELMread(client,"DPN");
-  writeELMread(client,"RV");
-  delay(1000);
-  writeOBDread(client,"0142");
-
-  // while (client.available() == 0){
-	  // delay(1000);
-	  // Serial.print(".");
-  // }
-  // unsigned long timeout = millis();
-  // while (client.available() == 0)
-  // {
-    // if (millis() - timeout > 5000)
-    // {
-      // Serial.println("Timeout sin respuesta, terminando conexión");
-      // client.stop();
-      // return;
-    // }
-  // }
-  
-  // while (client.available())
-  // {
-    // String line = client.readStringUntil('\r');
-    // Serial.println(line);
-  // }
-  // Serial.println();
-  // Serial.println("Cerrando conexión con servidor OBD2");
-  // if (client.connected())
-  // {
-    // client.stop();
-  // }
+	writeELMread("Z");
+	writeELMread("E0");
+	writeELMread("M0");
+	Serial.println("Detectando protocolo OBD...");
+	writeELMread("TPA1",10000);
+	writeELMread("DP");
+	writeELMread("DPN");
+	writeELMread("RV");
 }
 
 void loop() {
+	writeOBDread("0142");
+	delay(500);
+	writeOBDread("010C");
+	delay(500);
+	writeOBDread("015C");
+	delay(500);
 }
-
-
-
-// String writeOBDsave(WiFiClient client,String PID="", uint8_t bytesEx = 1, uint16_t delSp = 500) {
-// 	if (client.connected())
-// 	{
-// 		String sentToOBD = PID+'\r';
-// 		client.print(sentToOBD);
-// 		Serial.println("Enviado a OBD: "+sentToOBD);
-// 		delay(delSp);
-// 		String line = "";
-// 		while (client.available()){
-// 			line += client.readStringUntil('\r');
-// 		}
-// 		Serial.println("Recibido de OBD: "+line);
-// 		String resp = line.substr(4,bytesEx*2);
-// 		return resp;
-// 	}
-// 	else
-// 	{
-// 		Serial.println("Cliente desconectado, no se puede enviar el comando OBD");
-// 		return "ERROR";
-// 	}
-// }
