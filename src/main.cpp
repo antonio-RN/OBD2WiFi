@@ -16,20 +16,20 @@ void writeELMread(String PID="WS", uint16_t timeOUT = 5000) {
 	{
 		String sentToElm = "AT"+ PID +'\r';
 		client.print(sentToElm);
-		unsigned uint_16t t0 = millis();
-		unsigned uint_16t t1;
+		unsigned long t0 = millis();
+		unsigned long t1;
 		Serial.println("Enviado a ELM: "+sentToElm);
 		while (!client.available()){
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
 				Serial.println("No se ha recibido respuesta de ELM");
-				break
+				break;
 			}
 		}
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('\r');
+			String line = client.readStringUntil('>');
 			Serial.println("Recibido de ELM: "+line);
 			}
 		}
@@ -45,20 +45,20 @@ void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 	{
 		String sentToOBD = PID+'\r';
 		client.print(sentToOBD);
-		unsigned uint_16t t0 = millis();
-		unsigned uint_16t t1;
+		unsigned long t0 = millis();
+		unsigned long t1;
 		Serial.println("Enviado a OBD: "+sentToOBD);
 		while (!client.available()){
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
 				Serial.println("No se ha recibido respuesta de OBD");
-				break
+				break;
 			}
 		}
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('\r');
+			String line = client.readStringUntil('>');
 			Serial.println("Recibido de OBD: "+line);
 			}
 		}
