@@ -82,7 +82,7 @@ void setup() {
 	{
     delay(200);
     Serial.print(".");
-  }
+  	}
 	Serial.println();
 	Serial.print("Conectado con IP ");
 	Serial.println(WiFi.localIP());
