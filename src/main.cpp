@@ -69,7 +69,7 @@ void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 	}
 }
 
-// prueba de cambios para github
+// prueba de cambios para github 2
 
 void setup() {
 	Serial.begin(115200);
