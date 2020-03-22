@@ -69,6 +69,38 @@ void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 	}
 }
 
+int writeOBDsave(String PID="", uint16_t timeOUT = 500) {
+	if (client.connected())
+	{
+		String sentToOBD = PID+'\r';
+		client.print(sentToOBD);
+		unsigned long t0 = millis();
+		unsigned long t1;
+		Serial.println("Enviado a OBD: "+sentToOBD);
+		while (!client.available()){
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido respuesta de OBD");
+				break;
+			}
+		}
+		while (client.available()){
+			if (client.find('>'))
+			{
+			String line = client.readStringUntil('>');
+			Serial.println("Recibido de OBD: "+line);
+			String HEXstring = line.substring(4);
+			int HEXbytes = HEXstring.length()/2;
+			}
+			
+		}
+	}
+	else
+	{
+		Serial.println("Cliente desconectado, no se puede enviar el comando OBD");
+	}
+}
+
 void setup() {
 	Serial.begin(115200);
 	Serial.println();
