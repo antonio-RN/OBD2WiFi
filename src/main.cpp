@@ -29,7 +29,7 @@ void writeELMread(String PID="WS", uint16_t timeOUT = 5000) {
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('>');
+			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de ELM: "+line);
 			}
 		}
