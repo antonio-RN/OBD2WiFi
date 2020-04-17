@@ -58,7 +58,7 @@ void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('>');
+			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de OBD: "+line);
 			}
 		}
