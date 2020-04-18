@@ -3,22 +3,27 @@
 
 #define STASSID "WiFi_OBDII"
 #define STAPSK ""
-
+#define STAIP "192.168.0.10"
+#define STAPORT 35000
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
-const char* host = "192.168.0.10";
-const uint16_t port = 35000;
+const char* host = STAIP;
+const uint16_t port = STAPORT;
 WiFiClient client;
 
-void writeELMread(String PID="WS", uint16_t timeOUT = 5000) {
+void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 	if (client.connected())
 	{
-		String sentToElm = "AT"+ PID +'\r';
+		char sentToElm[2+sizeof(PID)];
+		strcat(sentToElm, "AT");
+		strcat(sentToElm, PID);
 		client.print(sentToElm);
+		client.print('\r');
 		unsigned long t0 = millis();
 		unsigned long t1;
-		Serial.println("Enviado a ELM: "+sentToElm);
+		Serial.print("Enviado a ELM: ");
+		Serial.println(sentToElm);
 		while (!client.available()){
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
@@ -29,7 +34,7 @@ void writeELMread(String PID="WS", uint16_t timeOUT = 5000) {
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('>');
+			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de ELM: "+line);
 			}
 		}
@@ -40,7 +45,7 @@ void writeELMread(String PID="WS", uint16_t timeOUT = 5000) {
 	}
 }
 
-void writeOBDread(String PID="", uint16_t timeOUT = 500) {
+void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
 		String sentToOBD = PID+'\r';
@@ -58,7 +63,7 @@ void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('>');
+			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de OBD: "+line);
 			}
 		}
@@ -69,7 +74,8 @@ void writeOBDread(String PID="", uint16_t timeOUT = 500) {
 	}
 }
 
-int writeOBDsave(String PID="", uint16_t timeOUT = 500) {
+u_int* writeOBDsave(const char* PID="", uint16_t timeOUT = 500) {
+	u_int* HEXreturn;
 	if (client.connected())
 	{
 		String sentToOBD = PID+'\r';
@@ -87,18 +93,23 @@ int writeOBDsave(String PID="", uint16_t timeOUT = 500) {
 		while (client.available()){
 			if (client.find('>'))
 			{
-			String line = client.readStringUntil('>');
-			Serial.println("Recibido de OBD: "+line);
-			String HEXstring = line.substring(4);
-			int HEXbytes = HEXstring.length()/2;
+				String line = client.readStringUntil('\r');
+				Serial.println("Recibido de OBD: "+line);
+				String HEXstring = line.substring(4);
+				for (int i = 0; i < HEXstring.length()/2; i++)
+				{
+					char HEXsubstring[2];
+					HEXstring.substring(i*2,i*2+2).toCharArray(HEXsubstring,2);
+					HEXreturn += atoi(HEXsubstring);
+				}
 			}
-			
 		}
 	}
 	else
 	{
 		Serial.println("Cliente desconectado, no se puede enviar el comando OBD");
 	}
+	return HEXreturn;
 }
 
 void setup() {
