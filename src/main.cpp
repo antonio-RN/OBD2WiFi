@@ -48,11 +48,15 @@ void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
-		String sentToOBD = PID+'\r';
+		char sentToOBD[2+sizeof(PID)];
+		strcat(sentToOBD, "AT");
+		strcat(sentToOBD, PID);
 		client.print(sentToOBD);
+		client.print('\r');
 		unsigned long t0 = millis();
 		unsigned long t1;
-		Serial.println("Enviado a OBD: "+sentToOBD);
+		Serial.print("Enviado a OBD: ");
+		Serial.println(sentToOBD);
 		while (!client.available()){
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
@@ -72,44 +76,6 @@ void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 	{
 		Serial.println("Cliente desconectado, no se puede enviar el comando OBD");
 	}
-}
-
-u_int* writeOBDsave(const char* PID="", uint16_t timeOUT = 500) {
-	u_int* HEXreturn;
-	if (client.connected())
-	{
-		String sentToOBD = PID+'\r';
-		client.print(sentToOBD);
-		unsigned long t0 = millis();
-		unsigned long t1;
-		Serial.println("Enviado a OBD: "+sentToOBD);
-		while (!client.available()){
-			t1 = millis();
-			if (t1-t0>=timeOUT) {
-				Serial.println("No se ha recibido respuesta de OBD");
-				break;
-			}
-		}
-		while (client.available()){
-			if (client.find('>'))
-			{
-				String line = client.readStringUntil('\r');
-				Serial.println("Recibido de OBD: "+line);
-				String HEXstring = line.substring(4);
-				for (int i = 0; i < HEXstring.length()/2; i++)
-				{
-					char HEXsubstring[2];
-					HEXstring.substring(i*2,i*2+2).toCharArray(HEXsubstring,2);
-					HEXreturn += atoi(HEXsubstring);
-				}
-			}
-		}
-	}
-	else
-	{
-		Serial.println("Cliente desconectado, no se puede enviar el comando OBD");
-	}
-	return HEXreturn;
 }
 
 void setup() {
