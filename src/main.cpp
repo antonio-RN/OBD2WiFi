@@ -11,19 +11,20 @@ const char* password = STAPSK;
 const char* host = STAIP;
 const uint16_t port = STAPORT;
 WiFiClient client;
+char dataSent[7];
+char dataReceived[6];
 
-void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
+void writeELMread(char PID="WS", uint16_t timeOUT = 5000) {
 	if (client.connected())
 	{
-		char sentToElm[2+sizeof(PID)];
-		strcat(sentToElm, "AT");
-		strcat(sentToElm, PID);
-		client.print(sentToElm);
+		strncat(dataSent, "AT", 3); 
+		strncat(dataSent, PID, 5);
+		client.print(dataSent);
 		client.print('\r');
 		unsigned long t0 = millis();
 		unsigned long t1;
 		Serial.print("Enviado a ELM: ");
-		Serial.println(sentToElm);
+		Serial.println(dataSent);
 		while (!client.available()){
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
@@ -37,6 +38,11 @@ void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de ELM: "+line);
 			}
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido el carácter > del ELM");
+				break;
+			}
 		}
 	}
 	else
@@ -45,18 +51,16 @@ void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 	}
 }
 
-void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
+void writeOBDread(char PID="", uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
-		char sentToOBD[2+sizeof(PID)];
-		strcat(sentToOBD, "AT");
-		strcat(sentToOBD, PID);
-		client.print(sentToOBD);
+		strncat(dataSent, PID, 7);
+		client.print(dataSent);
 		client.print('\r');
 		unsigned long t0 = millis();
 		unsigned long t1;
 		Serial.print("Enviado a OBD: ");
-		Serial.println(sentToOBD);
+		Serial.println(dataSent);
 		while (!client.available()){
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
@@ -70,11 +74,16 @@ void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de OBD: "+line);
 			}
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido el carácter > del ELM");
+				break;
+			}
 		}
 	}
 	else
 	{
-		Serial.println("Cliente desconectado, no se puede enviar el comando OBD");
+		Serial.println("Cliente desconectado, no se puede enviar el comando ELM");
 	}
 }
 
@@ -89,8 +98,8 @@ void setup() {
 	Serial.print("Conectando a módulo OBD2...");
 	while (WiFi.status() != WL_CONNECTED)
 	{
-    delay(200);
-    Serial.print(".");
+    		delay(200);
+    		Serial.print(".");
   	}
 	Serial.println();
 	Serial.print("Conectado con IP ");
