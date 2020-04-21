@@ -12,7 +12,7 @@ const char* host = STAIP;
 const uint16_t port = STAPORT;
 WiFiClient client;
 char dataSent[7];
-char dataReceived[6];
+int dataReceived[6] = {0, 0, 0, 0, 0};
 
 void writeELMread(char PID="WS", uint16_t timeOUT = 5000) {
 	if (client.connected())
@@ -73,6 +73,52 @@ void writeOBDread(char PID="", uint16_t timeOUT = 500) {
 			{
 			String line = client.readStringUntil('\r');
 			Serial.println("Recibido de OBD: "+line);
+			}
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido el carácter > del ELM");
+				break;
+			}
+		}
+	}
+	else
+	{
+		Serial.println("Cliente desconectado, no se puede enviar el comando ELM");
+	}
+}
+
+void writeOBDsave(char PID="", uint8_t totalSize = 1, uint16_t timeOUT = 500) {
+	if (client.connected())
+	{
+		strncat(dataSent, PID, 7);
+		for (int i==0; i < 5; i++) {
+			dataReceived[i] = 0;	
+		}
+		client.print(dataSent);
+		client.print('\r');
+		unsigned long t0 = millis();
+		unsigned long t1;
+		Serial.print("Enviado a OBD: ");
+		Serial.println(dataSent);
+		while (!client.available()){
+			t1 = millis();
+			if (t1-t0>=timeOUT) {
+				Serial.println("No se ha recibido respuesta de OBD");
+				break;
+			}
+		}
+		while (client.available()){
+			if (client.find('>'))
+			{
+				String line = client.readStringUntil('\r');
+				Serial.println("Recibido de OBD: "+line);
+				if (line[0] == "4") { //seguro que es con ""?
+					for (int i = 0; i < totalSize; i++) {
+						char HEXtemp[3] = "00"; //pointer?
+						line.substring(2+i*2, 4+i*2).toCharArray(HEXtemp, 3);
+						dataReceived[i] = stoi(HEXtemp, 0, 16);
+					}
+				}
 			}
 			t1 = millis();
 			if (t1-t0>=timeOUT) {
