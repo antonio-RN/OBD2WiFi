@@ -14,7 +14,7 @@ WiFiClient client;
 char dataSent[7];
 int dataReceived[6] = {0, 0, 0, 0, 0};
 
-void writeELMread(char PID="WS", uint16_t timeOUT = 5000) {
+void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 	if (client.connected())
 	{
 		strncat(dataSent, "AT", 3); 
@@ -51,7 +51,7 @@ void writeELMread(char PID="WS", uint16_t timeOUT = 5000) {
 	}
 }
 
-void writeOBDread(char PID="", uint16_t timeOUT = 500) {
+void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
 		strncat(dataSent, PID, 7);
@@ -87,11 +87,11 @@ void writeOBDread(char PID="", uint16_t timeOUT = 500) {
 	}
 }
 
-void writeOBDsave(char PID="", uint8_t totalSize = 1, uint16_t timeOUT = 500) {
+void writeOBDsave(const char* PID="", uint8_t totalSize = 1, uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
 		strncat(dataSent, PID, 7);
-		for (int i==0; i < 5; i++) {
+		for (int i=0; i < 5; i++) {
 			dataReceived[i] = 0;	
 		}
 		client.print(dataSent);
@@ -112,11 +112,11 @@ void writeOBDsave(char PID="", uint8_t totalSize = 1, uint16_t timeOUT = 500) {
 			{
 				String line = client.readStringUntil('\r');
 				Serial.println("Recibido de OBD: "+line);
-				if (line[0] == "4") { //seguro que es con ""?
+				if (line[0] == '4') { //seguro que es con ""?
 					for (int i = 0; i < totalSize; i++) {
 						char HEXtemp[3] = "00"; //pointer?
 						line.substring(2+i*2, 4+i*2).toCharArray(HEXtemp, 3);
-						dataReceived[i] = stoi(HEXtemp, 0, 16);
+						dataReceived[i] = (int) strtol(HEXtemp, 0, 16);
 					}
 				}
 			}
