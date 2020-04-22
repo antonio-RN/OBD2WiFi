@@ -19,6 +19,19 @@ char dataSent[7];
 int dataReceived[6] = {0, 0, 0, 0, 0};
 float finalData = 0.0;
 
+void transfer(float factor, int offset) {
+	if (dataReceived[1] == '0') {
+		finalData = factor*dataReceived[0]-offset;
+	}
+	else {
+		finalData = factor*(256*dataReceived[0]+dataReceived[1])-offset;
+	}
+}
+
+uint8_t HEXtoInt (char str[]){
+	return strtol(str,0,16);
+}
+
 void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 	if (client.connected())
 	{
@@ -145,19 +158,6 @@ void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0,
 	{
 		Serial.println("Cliente desconectado, no se puede enviar el comando ELM");
 	}
-}
-
-void transfer(float factor, int offset) {
-	if (dataReceived[1] == '0') {
-		finalData = factor*dataReceived[0]-offset;
-	}
-	else {
-		finalData = factor*(256*dataReceived[0]+dataReceived[1])-offset;
-	}
-}
-
-uint8_t HEXtoInt (char str[]){
-	return strtol(str,0,16);
 }
 
 void setup() {
