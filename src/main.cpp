@@ -1,5 +1,8 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+//#include "SPI.h"
+//#include <TFT_eSPI.h>
+
 
 #define STASSID "WiFi_OBDII"
 #define STAPSK ""
@@ -11,6 +14,7 @@ const char* password = STAPSK;
 const char* host = STAIP;
 const uint16_t port = STAPORT;
 WiFiClient client;
+//TFT_eSPI display = TFT_eSPI();
 char dataSent[7];
 int dataReceived[6] = {0, 0, 0, 0, 0};
 float finalData = 0.0;
@@ -159,7 +163,14 @@ void setup() {
 
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(ssid,password);
-
+	
+	//display.init();
+	//display.setSwapBytes(true);  //no muy seguro de si se necesita o no
+	//display..setRotation(3); //0, 1, (2), 3
+	//display..setTextSize(1); //probar distintos
+	//display.setTextColor(TFT_WHITE); //color de la letra
+	//display.setCursor(0, 0); //por asegurar
+	
 	Serial.print("Conectando a módulo OBD2...");
 	while (WiFi.status() != WL_CONNECTED)
 	{
