@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-//#include "SPI.h"
-//#include <TFT_eSPI.h>
+#include "SPI.h"
+#include <TFT_eSPI.h>
 
 
 #define STASSID "WiFi_OBDII"
@@ -14,7 +14,7 @@ const char* password = STAPSK;
 const char* host = STAIP;
 const uint16_t port = STAPORT;
 WiFiClient client;
-//TFT_eSPI display = TFT_eSPI();
+TFT_eSPI display = TFT_eSPI();
 char dataSent[7];
 int dataReceived[6] = {0, 0, 0, 0, 0};
 float finalData = 0.0;
@@ -92,7 +92,7 @@ void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 	}
 }
 
-void writeOBDsave(const char* PID="", uint8_t totalSize = 1, factor = 1.0, offset = 0, uint16_t timeOUT = 500) {
+void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0, int offset = 0, uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
 		strncat(dataSent, PID, 7);
@@ -122,11 +122,11 @@ void writeOBDsave(const char* PID="", uint8_t totalSize = 1, factor = 1.0, offse
 					for (int i = 0; i < totalSize; i++) {
 						char HEXtemp[3] = "00"; //pointer?
 						line.substring(2+i*2, 4+i*2).toCharArray(HEXtemp, 3);
-						dataReceived[i] = (int) strtol(HEXtemp, 0, 16);
+						dataReceived[i] = HEXtoInt(HEXtemp);
 					}
-				transfer();
+				transfer(factor, offset);
 				Serial.print("Los valores recibidos son: ");
-					for (i = 0; i < totalSize; i++){
+					for (int i = 0; i < totalSize; i++){
 						Serial.print(dataReceived[i]);	
 					}
 				Serial.println();
@@ -147,13 +147,17 @@ void writeOBDsave(const char* PID="", uint8_t totalSize = 1, factor = 1.0, offse
 	}
 }
 
-void transfer() {
+void transfer(float factor, int offset) {
 	if (dataReceived[1] == '0') {
-		finalData = factor*dataReceived[0]-offset:
+		finalData = factor*dataReceived[0]-offset;
 	}
 	else {
 		finalData = factor*(256*dataReceived[0]+dataReceived[1])-offset;
 	}
+}
+
+int HEXtoInt (char str[]){
+	return strtol(str,0,16);
 }
 
 void setup() {
