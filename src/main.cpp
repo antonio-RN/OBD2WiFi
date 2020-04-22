@@ -156,7 +156,7 @@ void transfer(float factor, int offset) {
 	}
 }
 
-int HEXtoInt (char str[]){
+uint8_t HEXtoInt (char str[]){
 	return strtol(str,0,16);
 }
 
