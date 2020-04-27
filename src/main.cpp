@@ -14,10 +14,23 @@ const char* password = STAPSK;
 const char* host = STAIP;
 const uint16_t port = STAPORT;
 WiFiClient client;
+uint8_t desiredMode = 1; // 1 = normal, 2 = sport; 0 = bienvenida, nunca en desiredMode. Falta input para cambiar de modo
 TFT_eSPI display = TFT_eSPI();
 char dataSent[7];
-int dataReceived[6] = {0, 0, 0, 0, 0};
+uin8_t dataReceived[6] = {0, 0, 0, 0, 0};
 float finalData = 0.0;
+
+float vBat = 0.0;
+int8_t tAmb = 0;
+float tank = 0.0;
+uint8_t vel = 0;
+float RMP = 0.0; 
+uint8_t gear = 0;
+uint8_t tWat = 0;
+uint8_t tOil = 0;
+float tLoad = 0.0;
+uint16_t pFuel = 0.0;
+
 
 void transfer(float factor, int offset) {
 	if (dataReceived[1] == '0') {
@@ -160,6 +173,23 @@ void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0,
 	}
 }
 
+void exeMode(uint8_t desiredMode = 1, float *vBat1 = *vBat, int8_t *tAmb1 = *tAmb, float *tank1 = *tank, uint8_t *vel1 = *vel,
+	    float *RPM1 = *RPM, uint8_t *gear1 = *gear, uint8_t *tWat1 = *tWat, uint8_t *tOil1 = *tOil, float *tLoad1 = *tLoad,
+	    uint16_t *pFuel1 = *pFuel) { //faltan argumentos, revisar Scope
+	if (desiredMode == 0) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
+
+	}
+	elif (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
+				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
+
+	}
+	elif (desiredMode ==2) { //tanque restante (o batería, a implementar después)
+				//marcha engranada - falta probar esta útlima, no info -(posible susituto?), temperatura refri
+				//temperatura aceite, par motor (decidir cuál), presión fuel
+		
+	}
+}
+
 void setup() {
 	Serial.begin(115200);
 	Serial.println();
@@ -198,6 +228,7 @@ void setup() {
 	Serial.println("Conexión establecida al servidor");
 	delay(1000);
   
+	// pruebas iniciales, borrar lo máximo posible una vez funcione todo OK
 	writeELMread("Z");
 	writeELMread("E0");
 	writeELMread("M0");
@@ -206,9 +237,21 @@ void setup() {
 	writeELMread("DP");
 	writeELMread("DPN");
 	writeELMread("RV");
+	
+	unsigned long t0 = millis();
+	delay(5);
+	unsigned long t1 = millis();
+	
+	while (t1-t0 < 5000) {
+		exeMode(0);
+		delay(50); //temporal, probar hasta encontrar el mínimo
+		//función para actualizar datos de pantalla, NPI
+		t1 = millis();
+	}
 }
 
 void loop() {
+	// modo prueba, para ver los valores de respuesta y debug. Borrar en versión final
 	writeOBDread("0142");
 	delay(500);
 	writeOBDsave("0142", 2, 0.001, 0);
@@ -221,4 +264,9 @@ void loop() {
 	delay(500);
 	writeOBDsave("015C", 1, 0.0, 40);
 	delay(500);
+	
+	//modo normal, comentar en pruebas
+	exeMode(desiredMode);
+	delay(100); //temporal, probar hasta encontrar el mínimo
+		
 }
