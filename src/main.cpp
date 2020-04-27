@@ -32,7 +32,7 @@ float tLoad = 0.0;
 uint16_t pFuel = 0.0;
 
 
-void transfer(float factor, int offset) {
+void transfer(float factor, int16_t offset) {
 	if (dataReceived[1] == '0') {
 		finalData = factor*dataReceived[0]-offset;
 	}
@@ -43,6 +43,18 @@ void transfer(float factor, int offset) {
 
 uint8_t HEXtoInt (char str[]){
 	return strtol(str,0,16);
+}
+
+int8_t floatToInt8(float floatIn){
+	return floatIn;
+}
+
+uint8_t floatToUint8(float floatIn){
+	return floatIn;
+}
+
+uint16_t floatToUint16(float floatIn){
+	return floatIn;
 }
 
 void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
@@ -118,7 +130,7 @@ void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
 	}
 }
 
-void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0, int offset = 0, uint16_t timeOUT = 500) {
+void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0, int16_t offset = 0, uint16_t timeOUT = 500) {
 	if (client.connected())
 	{
 		strncat(dataSent, PID, 7);
@@ -173,20 +185,49 @@ void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0,
 	}
 }
 
-void exeMode(uint8_t desiredMode = 1, float *vBat1 = *vBat, int8_t *tAmb1 = *tAmb, float *tank1 = *tank, uint8_t *vel1 = *vel,
-	    float *RPM1 = *RPM, uint8_t *gear1 = *gear, uint8_t *tWat1 = *tWat, uint8_t *tOil1 = *tOil, float *tLoad1 = *tLoad,
-	    uint16_t *pFuel1 = *pFuel) { //faltan argumentos, revisar Scope
+void exeMode(uint8_t desiredMode = 1) {
 	if (desiredMode == 0) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
-
+		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
+		vBat = finalData;
+		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
+		tAmb = floatToint8(finalData);
+		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
+		tank = finalData;
 	}
 	elif (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
-
+		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
+		vBat = finalData;
+		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
+		tAmb = floatToint8(finalData);
+		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
+		tank = finalData;
+		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
+		RPM = finalData;
+		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
+		vel = floatToUint8(finalData);
+		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
+		gear = floatToUint8(finalData);
 	}
 	elif (desiredMode ==2) { //tanque restante (o batería, a implementar después)
 				//marcha engranada - falta probar esta útlima, no info -(posible susituto?), temperatura refri
 				//temperatura aceite, par motor (decidir cuál), presión fuel
-		
+		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
+		tank = finalData;
+		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
+		RPM = finalData;
+		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
+		vel = floatToUint8(finalData);
+		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
+		gear = floatToUint8(finalData);
+		writeOBDsave("0105", 1, 1.0, 40); //temperatura refri motor
+		tWat = floatToUint8(finalData);
+		writeOBDsave("015C", 1, 1.0, 40); //temperatura refri motor
+		tOil = floatToUint8(finalData);
+		writeOBDsave("0143", 2, 0.392, 0); //par motor (absoluto) -provisional-
+		tLoad = finalData;
+		writeOBDsave("010A", 1, 3.0, 0); //presión fuel
+		pFuel = floatToUint16(finalData);
 	}
 }
 
