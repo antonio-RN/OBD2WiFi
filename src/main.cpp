@@ -9,6 +9,9 @@
 #define STAIP "192.168.0.10"
 #define STAPORT 35000
 
+#define TFT_CS_1   PIN_D8
+#define TFT_CS_2   PIN_D9
+
 const char* ssid = STASSID;
 const char* password = STAPSK;
 const char* host = STAIP;
@@ -17,14 +20,14 @@ WiFiClient client;
 uint8_t desiredMode = 1; // 1 = normal, 2 = sport; 0 = bienvenida, nunca en desiredMode. Falta input para cambiar de modo
 TFT_eSPI display = TFT_eSPI();
 char dataSent[7];
-uin8_t dataReceived[6] = {0, 0, 0, 0, 0};
+uint8_t dataReceived[6] = {0, 0, 0, 0, 0};
 float finalData = 0.0;
 
 float vBat = 0.0;
 int8_t tAmb = 0;
 float tank = 0.0;
 uint8_t vel = 0;
-float RMP = 0.0; 
+float RPM = 0.0; 
 uint8_t gear = 0;
 uint8_t tWat = 0;
 uint8_t tOil = 0;
@@ -190,16 +193,16 @@ void exeMode(uint8_t desiredMode = 1) {
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
-		tAmb = floatToint8(finalData);
+		tAmb = floatToInt8(finalData);
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
 	}
-	elif (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
+	else if (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
-		tAmb = floatToint8(finalData);
+		tAmb = floatToInt8(finalData);
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
 		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
@@ -209,7 +212,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
 		gear = floatToUint8(finalData);
 	}
-	elif (desiredMode ==2) { //tanque restante (o batería, a implementar después)
+	else if (desiredMode ==2) { //tanque restante (o batería, a implementar después)
 				//marcha engranada - falta probar esta útlima, no info -(posible susituto?), temperatura refri
 				//temperatura aceite, par motor (decidir cuál), presión fuel
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
@@ -239,12 +242,16 @@ void setup() {
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(ssid,password);
 	
-	//display.init();
-	//display.setSwapBytes(true);  //no muy seguro de si se necesita o no
-	//display..setRotation(3); //0, 1, (2), 3
-	//display..setTextSize(1); //probar distintos
-	//display.setTextColor(TFT_WHITE); //color de la letra
-	//display.setCursor(0, 0); //por asegurar
+	digitalWrite(TFT_CS_1, LOW);
+	digitalWrite(TFT_CS_2, LOW);
+	display.init();
+	display.setRotation(0);
+	display.fillScreen(TFT_BLACK);
+	display.setTextSize(1);
+	display.setTextColor(TFT_WHITE, TFT_BLACK);
+	display.setCursor(0, 0);
+	digitalWrite(TFT_CS_1, HIGH);
+	digitalWrite(TFT_CS_2, HIGH);
 	
 	Serial.print("Conectando a módulo OBD2...");
 	while (WiFi.status() != WL_CONNECTED)
