@@ -193,7 +193,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
 		digitalWrite(TFT_CS_1, LOW);
-		display.SetTextDatum(4);
+		display.setTextDatum(4);
 		display.drawFloat(vBat, 1, 60, 60, 6);
 		digitalWrite(TFT_CS_1, HIGH),
 
@@ -203,9 +203,9 @@ void exeMode(uint8_t desiredMode = 1) {
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
 		digitalWrite(TFT_CS_2, LOW);
-		display.SetTextDatum(4);
+		display.setTextDatum(4);
 		display.drawNumber(tank, 60, 60, 6);
-		digitalWrite(TFT_CS_2, HIGH),
+		digitalWrite(TFT_CS_2, HIGH);
 	}
 	else if (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
