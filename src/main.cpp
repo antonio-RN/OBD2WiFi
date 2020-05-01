@@ -192,10 +192,20 @@ void exeMode(uint8_t desiredMode = 1) {
 	if (desiredMode == 0) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
+		digitalWrite(TFT_CS_1, LOW);
+		display.SetTextDatum(4);
+		display.drawFloat(vBat, 1, 60, 60, 6);
+		digitalWrite(TFT_CS_1, HIGH),
+
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
 		tAmb = floatToInt8(finalData);
+
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
+		digitalWrite(TFT_CS_2, LOW);
+		display.SetTextDatum(4);
+		display.drawNumber(tank, 60, 60, 6);
+		digitalWrite(TFT_CS_2, HIGH),
 	}
 	else if (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
@@ -248,6 +258,8 @@ void setup() {
 	display.setRotation(0);
 	display.fillScreen(TFT_BLACK);
 	display.setTextSize(1);
+	display.setTextDatum(0); //3 mid left, 5 mid right
+	display.setTextFont(4);
 	display.setTextColor(TFT_WHITE, TFT_BLACK);
 	display.setCursor(0, 0);
 	digitalWrite(TFT_CS_1, HIGH);
@@ -286,14 +298,11 @@ void setup() {
 	writeELMread("DPN");
 	writeELMread("RV");
 	
-	unsigned long t0 = millis();
-	delay(5);
+	unsigned long t0 = millis()-1;
 	unsigned long t1 = millis();
 	
 	while (t1-t0 < 5000) {
 		exeMode(0);
-		delay(50); //temporal, probar hasta encontrar el mínimo
-		//función para actualizar datos de pantalla, NPI
 		t1 = millis();
 	}
 }
@@ -314,7 +323,5 @@ void loop() {
 	delay(500);
 	
 	//modo normal, comentar en pruebas
-	exeMode(desiredMode);
-	delay(100); //temporal, probar hasta encontrar el mínimo
-		
+	exeMode(desiredMode);	
 }
