@@ -17,6 +17,7 @@ const char* password = STAPSK;
 const char* host = STAIP;
 const uint16_t port = STAPORT;
 WiFiClient client;
+uint8_t actualMode = 0;
 uint8_t desiredMode = 1; // 1 = normal, 2 = sport; 0 = bienvenida, nunca en desiredMode. Falta input para cambiar de modo
 TFT_eSPI display = TFT_eSPI();
 char dataSent[7];
@@ -97,7 +98,7 @@ void writeELMread(const char* PID="WS", uint16_t timeOUT = 5000) {
 	}
 }
 
-void writeOBDread(const char* PID="", uint16_t timeOUT = 500) {
+void writeOBDread(const char* PID="", uint16_t timeOUT = 500) { //writeOBDsave hace lo mismo y más, eliminar cuadno funcione
 	if (client.connected())
 	{
 		strncat(dataSent, PID, 7);
@@ -189,56 +190,118 @@ void writeOBDsave(const char* PID="", uint8_t totalSize = 1, float factor = 1.0,
 }
 
 void exeMode(uint8_t desiredMode = 1) {
+	if (desiredMode != actualMode){
+		digitalWrite(TFT_CS_1, LOW);
+		digitalWrite(TFT_CS_2, LOW);
+		display.fillScreen(TFT_BLACK);
+		digitalWrite(TFT_CS_1, HIGH);
+		digitalWrite(TFT_CS_2, HIGH);
+		actualMode = desiredMode;
+	}
+	
 	if (desiredMode == 0) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
+
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(4);
-		display.drawFloat(vBat, 1, 60, 60, 6);
-		digitalWrite(TFT_CS_1, HIGH),
+		display.drawFloat(vBat, 1, 100, 100, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_1, HIGH);
+		delay(50); //prueba y error
 
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
 		tAmb = floatToInt8(finalData);
+		digitalWrite(TFT_CS_1, LOW);
+		display.setTextDatum(8);
+		display.drawNumber(tAmb, 240, 240, 4); //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_1, HIGH);
+		delay(50); //prueba y error
 
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
 		digitalWrite(TFT_CS_2, LOW);
 		display.setTextDatum(4);
-		display.drawNumber(tank, 60, 60, 6);
+		display.drawNumber(tank, 120, 100, 6); //puede quedar cifra anterior si cambia de orden -> corregir
 		digitalWrite(TFT_CS_2, HIGH);
+		delay(50); //prueba y error
 	}
+
 	else if (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
+
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
+		digitalWrite(TFT_CS_1, LOW);
+		display.setTextDatum(2);
+		display.drawFloat(vBat, 1, 240, 0, 2); //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_1, HIGH);
+		delay(50); //prueba y error
+
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
 		tAmb = floatToInt8(finalData);
+		digitalWrite(TFT_CS_1, LOW);
+		display.setTextDatum(0);
+		display.drawNumber(tAmb, 0, 0, 2);  //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_1, HIGH);
+		delay(50); //prueba y error
+
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
+		digitalWrite(TFT_CS_2, LOW);
+		display.setTextDatum(2);
+		display.drawNumber(tank, 240, 0, 2); //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_2, HIGH);
+		delay(50); //prueba y error
+
 		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
 		RPM = finalData;
+		digitalWrite(TFT_CS_2, LOW);
+		display.setTextDatum(4);
+		display.drawNumber(RPM, 120, 120, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_2, HIGH);
+		delay(50); //prueba y error
+
 		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
 		vel = floatToUint8(finalData);
+		digitalWrite(TFT_CS_1, LOW);
+		display.setTextDatum(4);
+		display.drawNumber(vel, 100, 120, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		digitalWrite(TFT_CS_1, HIGH);
+		delay(50); //prueba y error
+
 		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
 		gear = floatToUint8(finalData);
+		digitalWrite(TFT_CS_1, LOW);
+		display.setTextDatum(8);
+		display.drawNumber(gear, 240, 240, 6);
+		digitalWrite(TFT_CS_1, HIGH);
+		delay(50); //prueba y error
 	}
 	else if (desiredMode ==2) { //tanque restante (o batería, a implementar después)
 				//marcha engranada - falta probar esta útlima, no info -(posible susituto?), temperatura refri
 				//temperatura aceite, par motor (decidir cuál), presión fuel
+
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
+
 		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
 		RPM = finalData;
+
 		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
 		vel = floatToUint8(finalData);
+
 		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
 		gear = floatToUint8(finalData);
+
 		writeOBDsave("0105", 1, 1.0, 40); //temperatura refri motor
 		tWat = floatToUint8(finalData);
+
 		writeOBDsave("015C", 1, 1.0, 40); //temperatura refri motor
 		tOil = floatToUint8(finalData);
+
 		writeOBDsave("0143", 2, 0.392, 0); //par motor (absoluto) -provisional-
 		tLoad = finalData;
+
 		writeOBDsave("010A", 1, 3.0, 0); //presión fuel
 		pFuel = floatToUint16(finalData);
 	}
