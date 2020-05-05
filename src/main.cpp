@@ -198,14 +198,17 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_2, HIGH);
 		actualMode = desiredMode;
 	}
-	
+	int16_t tempWidth = 0;
 	if (desiredMode == 0) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 
 		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
 		vBat = finalData;
 		digitalWrite(TFT_CS_1, LOW);
-		display.setTextDatum(4);
-		display.drawFloat(vBat, 1, 100, 100, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		display.setTextDatum(5);
+		tempWidth = display.drawFloat(vBat, 1, 200, 100, 6);
+		if (vBat<10.0) {
+			display.drawString(" ", 200-tempWidth, 100, 6);
+		}
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
@@ -213,15 +216,30 @@ void exeMode(uint8_t desiredMode = 1) {
 		tAmb = floatToInt8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(8);
-		display.drawNumber(tAmb, 240, 240, 4); //puede quedar cifra anterior si cambia de orden -> corregir
+		tempWidth = display.drawNumber(tAmb, 240, 240, 4);
+		if (tAmb>=10) {
+			display.drawString(" ", 240-tempWidth, 240, 4);
+		}
+		else if (tAmb>=0) {
+			display.drawString("  ", 240-tempWidth, 240, 4);
+		}
+		else if (tAmb>-10) {
+			display.drawString(" ", 240-tempWidth, 240, 4);
+		}
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
 		tank = finalData;
 		digitalWrite(TFT_CS_2, LOW);
-		display.setTextDatum(4);
-		display.drawNumber(tank, 120, 100, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		display.setTextDatum(5);
+		tempWidth = display.drawNumber(tank, 180, 100, 6);
+		if (tank<10) {
+			display.drawString("  ", 180-tempWidth, 100, 6);
+		}
+		else if (tank<100) {
+			display.drawString(" ", 180-tempWidth, 100, 6);
+		}
 		digitalWrite(TFT_CS_2, HIGH);
 		delay(50); //prueba y error
 	}
@@ -233,7 +251,10 @@ void exeMode(uint8_t desiredMode = 1) {
 		vBat = finalData;
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(2);
-		display.drawFloat(vBat, 1, 240, 0, 2); //puede quedar cifra anterior si cambia de orden -> corregir
+		tempWidth = display.drawFloat(vBat, 1, 240, 0, 2);
+		if (vBat<10.0) {
+			display.drawString(" ", 240-tempWidth, 0, 2);
+		}
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
@@ -241,7 +262,16 @@ void exeMode(uint8_t desiredMode = 1) {
 		tAmb = floatToInt8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(0);
-		display.drawNumber(tAmb, 0, 0, 2);  //puede quedar cifra anterior si cambia de orden -> corregir
+		tempWidth = display.drawNumber(tAmb, 50, 0, 2);
+		if (tAmb>=10) {
+			display.drawString(" ", 50-tempWidth, 0, 2);
+		}
+		else if (tAmb>=0) {
+			display.drawString("  ", 50-tempWidth, 0, 2);
+		}
+		else if (tAmb>-10) {
+			display.drawString(" ", 50-tempWidth, 0, 2);
+		}
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
@@ -249,23 +279,44 @@ void exeMode(uint8_t desiredMode = 1) {
 		tank = finalData;
 		digitalWrite(TFT_CS_2, LOW);
 		display.setTextDatum(2);
-		display.drawNumber(tank, 240, 0, 2); //puede quedar cifra anterior si cambia de orden -> corregir
+		tempWidth = display.drawNumber(tank, 240, 0, 2); //puede quedar cifra anterior si cambia de orden -> corregir
+		if (tank<10) {
+			display.drawString("  ", 240-tempWidth, 0, 2);
+		}
+		else if (tank<100) {
+			display.drawString(" ", 240-tempWidth, 0, 2);
+		}
 		digitalWrite(TFT_CS_2, HIGH);
 		delay(50); //prueba y error
 
 		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
 		RPM = finalData;
 		digitalWrite(TFT_CS_2, LOW);
-		display.setTextDatum(4);
-		display.drawNumber(RPM, 120, 120, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		display.setTextDatum(5);
+		tempWidth = display.drawFloat(RPM, 0, 200, 120, 6);
+		if (RPM<10.0) {
+			display.drawString("   ", 200-tempWidth, 120, 6);
+		}
+		else if (RPM<100.0) {
+			display.drawString("  ", 200-tempWidth, 120, 6);
+		}
+		else if (RPM<1000.0) {
+			display.drawString(" ", 200-tempWidth, 120, 6);
+		}
 		digitalWrite(TFT_CS_2, HIGH);
 		delay(50); //prueba y error
 
 		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
 		vel = floatToUint8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
-		display.setTextDatum(4);
-		display.drawNumber(vel, 100, 120, 6); //puede quedar cifra anterior si cambia de orden -> corregir
+		display.setTextDatum(5);
+		tempWidth = display.drawNumber(vel, 140, 120, 6);
+		if (vel<10) {
+			display.drawString("  ", 140-tempWidth, 120, 6);
+		}
+		else if (vel<100) {
+			display.drawString(" ", 140-tempWidth, 120, 6);
+		}
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
