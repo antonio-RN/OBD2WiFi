@@ -199,9 +199,9 @@ void exeMode(uint8_t desiredMode = 1) {
 		actualMode = desiredMode;
 	}
 	int16_t tempWidth = 0;
-	if (desiredMode == 0) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
+	if (desiredMode == 0) { //bienvenida: voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 
-		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
+		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería. Display 1. Datum centrado, x100y100 fuente 6
 		vBat = finalData;
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(4);
@@ -211,7 +211,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
+		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente. Display 1. Datum extremo abajo derecho, x240y240 fuente 4
 		tAmb = floatToInt8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(8);
@@ -221,21 +221,21 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
+		writeOBDsave("022F", 1, 0.392, 0); //tanque restante. Display 2. Datum centrado, x140y100
 		tank = finalData;
 		digitalWrite(TFT_CS_2, LOW);
 		display.setTextDatum(4);
 		tempWidth = display.textWidth("999", 6);
 		display.setTextPadding(tempWidth);
-		display.drawNumber(tank, 100, 100, 6);
+		display.drawFloat(tank, 0, 140, 100, 6);
 		digitalWrite(TFT_CS_2, HIGH);
 		delay(50); //prueba y error
 	}
 
-	else if (desiredMode == 1) { //voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
+	else if (desiredMode == 1) { //normal: voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
 				//velocidad actual, RPM actual, marcha engranada - falta probar esta útlima, no info -(posible susituto?)
 
-		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería
+		writeOBDsave("015B", 2, 0.001, 0); //voltaje batería. Display 1. Datum arriba derecha, x240y0 fuente 2
 		vBat = finalData;
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(2);
@@ -245,27 +245,27 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente
+		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente. Display 1. Datum arriba izquierda, x10y0 fuente 2
 		tAmb = floatToInt8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(0);
 		tempWidth = display.textWidth("-99", 2);
 		display.setTextPadding(tempWidth);
-		display.drawNumber(tAmb, 50, 0, 2);
+		display.drawNumber(tAmb, 10, 0, 2);
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
+		writeOBDsave("022F", 1, 0.392, 0); //tanque restante. Display 2. Datum arriba derecha, x230y0 fuente 2
 		tank = finalData;
 		digitalWrite(TFT_CS_2, LOW);
 		display.setTextDatum(2);
 		tempWidth = display.textWidth("999", 2);
 		display.setTextPadding(tempWidth);
-		display.drawNumber(tank, 240, 0, 2);
+		display.drawFloat(tank, 0, 230, 0, 2);
 		digitalWrite(TFT_CS_2, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
+		writeOBDsave("010C", 2, 0.25, 0); //RPM actual. Display 2. Datum centrado, x120y120 fuente 6
 		RPM = finalData;
 		digitalWrite(TFT_CS_2, LOW);
 		display.setTextDatum(4);
@@ -275,7 +275,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_2, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
+		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual. Display 1. Datum centrado, x100y120 fuente 6
 		vel = floatToUint8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(4);
@@ -285,7 +285,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 
-		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
+		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición). Display 1. Datum abajo derecha, x240y240 fuente 6
 		gear = floatToUint8(finalData);
 		digitalWrite(TFT_CS_1, LOW);
 		display.setTextDatum(8);
@@ -295,7 +295,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		digitalWrite(TFT_CS_1, HIGH);
 		delay(50); //prueba y error
 	}
-	else if (desiredMode ==2) { //tanque restante (o batería, a implementar después)
+	else if (desiredMode ==2) { //sport: tanque restante (o batería, a implementar después)
 				//marcha engranada - falta probar esta útlima, no info -(posible susituto?), temperatura refri
 				//temperatura aceite, par motor (decidir cuál), presión fuel
 
@@ -339,8 +339,9 @@ void setup() {
 	display.setRotation(0);
 	display.fillScreen(TFT_BLACK);
 	display.setTextSize(1);
-	display.setTextDatum(0); //3 mid left, 5 mid right
+	display.setTextDatum(0);
 	display.setTextFont(4);
+	display.setTextPadding(0);
 	display.setTextColor(TFT_WHITE, TFT_BLACK);
 	display.setCursor(0, 0);
 	digitalWrite(TFT_CS_1, HIGH);
