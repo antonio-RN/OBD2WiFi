@@ -16,9 +16,11 @@ const char* ssid = STASSID;
 const char* password = STAPSK;
 const char* host = STAIP;
 const uint16_t port = STAPORT;
+const uint8_t timeWait = 50; //prueba y error
 WiFiClient client;
 uint8_t actualMode = 0;
 uint8_t desiredMode = 1; // 1 = normal, 2 = sport; 0 = bienvenida, nunca en desiredMode. Falta input para cambiar de modo
+bool tOilLow = 1;
 TFT_eSPI display = TFT_eSPI();
 char dataSent[7];
 uint8_t dataReceived[6] = {0, 0, 0, 0, 0};
@@ -209,7 +211,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawFloat(vBat, 1, 100, 100, 6);
 		digitalWrite(TFT_CS_1, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente. Display 1. Datum extremo abajo derecho, x240y240 fuente 4
 		tAmb = floatToInt8(finalData);
@@ -219,7 +221,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawNumber(tAmb, 240, 240, 4);
 		digitalWrite(TFT_CS_1, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante. Display 2. Datum centrado, x140y100
 		tank = finalData;
@@ -229,7 +231,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawFloat(tank, 0, 140, 100, 6);
 		digitalWrite(TFT_CS_2, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 	}
 
 	else if (desiredMode == 1) { //normal: voltaje batería, temperatura ambiente, tanque restante (o batería, a implementar después)
@@ -243,7 +245,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawFloat(vBat, 1, 240, 0, 2);
 		digitalWrite(TFT_CS_1, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("0146", 1, 1.0, 40); //temperatura ambiente. Display 1. Datum arriba izquierda, x10y0 fuente 2
 		tAmb = floatToInt8(finalData);
@@ -253,7 +255,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawNumber(tAmb, 10, 0, 2);
 		digitalWrite(TFT_CS_1, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("022F", 1, 0.392, 0); //tanque restante. Display 2. Datum arriba derecha, x230y0 fuente 2
 		tank = finalData;
@@ -263,7 +265,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawFloat(tank, 0, 230, 0, 2);
 		digitalWrite(TFT_CS_2, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("010C", 2, 0.25, 0); //RPM actual. Display 2. Datum centrado, x120y120 fuente 6
 		RPM = finalData;
@@ -273,7 +275,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawFloat(RPM, 0, 120, 120, 6);
 		digitalWrite(TFT_CS_2, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual. Display 1. Datum centrado, x100y120 fuente 6
 		vel = floatToUint8(finalData);
@@ -283,7 +285,7 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawNumber(vel, 100, 120, 6);
 		digitalWrite(TFT_CS_1, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 
 		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición). Display 1. Datum abajo derecha, x240y240 fuente 6
 		gear = floatToUint8(finalData);
@@ -293,35 +295,125 @@ void exeMode(uint8_t desiredMode = 1) {
 		display.setTextPadding(tempWidth);
 		display.drawNumber(gear, 240, 240, 6);
 		digitalWrite(TFT_CS_1, HIGH);
-		delay(50); //prueba y error
+		delay(timeWait);
 	}
 	else if (desiredMode ==2) { //sport: tanque restante (o batería, a implementar después)
 				//marcha engranada - falta probar esta útlima, no info -(posible susituto?), temperatura refri
 				//temperatura aceite, par motor (decidir cuál), presión fuel
 
-		writeOBDsave("022F", 1, 0.392, 0); //tanque restante
-		tank = finalData;
-
+		writeOBDsave("015C", 1, 1.0, 40); //temperatura aceite
+		tOil = floatToUint8(finalData);
+		if (tOil<85) {
+			if(!tOilLow) {
+				tOilLow = !tOilLow;
+				digitalWrite(TFT_CS_1, LOW);
+				display.fillScreen(TFT_BLACK);				
+			}
+			digitalWrite(TFT_CS_1, LOW);
+			display.setTextDatum(4);
+			tempWidth = display.textWidth("999", 6);
+			display.setTextPadding(tempWidth);
+			display.setTextColor(TFT_RED);
+			display.drawNumber(tOil, 120, 170, 6);
+			display.setTextColor(TFT_BLACK);
+			digitalWrite(TFT_CS_1, HIGH);
+			delay(timeWait);
+			
+			writeOBDsave("0105", 1, 1.0, 40); //temperatura refri motor
+			tWat = floatToUint8(finalData);
+			digitalWrite(TFT_CS_1, LOW);
+			display.setTextDatum(4);
+			tempWidth = display.textWidth("999", 4);
+			display.setTextPadding(tempWidth);
+			display.drawNumber(tWat, 120, 50, 4);
+			digitalWrite(TFT_CS_1, HIGH);
+			delay(timeWait);
+		}
+		else {
+			if (tOilLow) {
+				tOilLow = !tOilLow;
+				digitalWrite(TFT_CS_1, LOW);
+				display.fillScreen(TFT_BLACK);
+				
+			}
+			digitalWrite(TFT_CS_1, LOW);
+			display.setTextDatum(4);
+			tempWidth = display.textWidth("999", 4);
+			display.setTextPadding(tempWidth);
+			display.drawNumber(tOil, 70, 170, 4);
+			digitalWrite(TFT_CS_1, HIGH);
+			delay(timeWait);
+			
+			writeOBDsave("022F", 1, 0.392, 0); //tanque restante
+			tank = finalData;
+			digitalWrite(TFT_CS_1, LOW);
+			display.setTextDatum(4);
+			tempWidth = display.textWidth("999", 4);
+			display.setTextPadding(tempWidth);
+			display.drawFloat(tank, 0, 70, 70, 4);
+			digitalWrite(TFT_CS_1, HIGH);
+			delay(timeWait);
+			
+			writeOBDsave("0105", 1, 1.0, 40); //temperatura refri motor
+			tWat = floatToUint8(finalData);
+			digitalWrite(TFT_CS_1, LOW);
+			display.setTextDatum(4);
+			tempWidth = display.textWidth("999", 4);
+			display.setTextPadding(tempWidth);
+			display.drawNumber(tWat, 170, 170, 4);
+			digitalWrite(TFT_CS_1, HIGH);
+			delay(timeWait);
+			
+			writeOBDsave("010A", 1, 3.0, 0); //presión fuel
+			pFuel = floatToUint16(finalData);
+			digitalWrite(TFT_CS_1, LOW);
+			display.setTextDatum(4);
+			tempWidth = display.textWidth("999", 4);
+			display.setTextPadding(tempWidth);
+			display.drawFloat(pFuel, 170, 70, 4);
+			digitalWrite(TFT_CS_1, HIGH);
+			delay(timeWait);
+		}
+			
 		writeOBDsave("010C", 2, 0.25, 0); //RPM actual
 		RPM = finalData;
+		digitalWrite(TFT_CS_2, LOW);
+		display.setTextDatum(5);
+		tempWidth = display.textWidth("9999", 4);
+		display.setTextPadding(tempWidth);
+		display.drawFloat(RPM, 0, 180, 40, 4);
+		digitalWrite(TFT_CS_2, HIGH);
+		delay(timeWait);
 
 		writeOBDsave("010D", 1, 1.0, 0); //velocidad actual
 		vel = floatToUint8(finalData);
+		digitalWrite(TFT_CS_2, LOW);
+		display.setTextDatum(5);
+		tempWidth = display.textWidth("999", 4);
+		display.setTextPadding(tempWidth);
+		display.drawNumber(vel, 180, 120, 4);
+		digitalWrite(TFT_CS_2, HIGH);
+		delay(timeWait);
 
 		writeOBDsave("01A4", 1, 1.0, 0); //marcha engranada (suposición)
 		gear = floatToUint8(finalData);
-
-		writeOBDsave("0105", 1, 1.0, 40); //temperatura refri motor
-		tWat = floatToUint8(finalData);
-
-		writeOBDsave("015C", 1, 1.0, 40); //temperatura refri motor
-		tOil = floatToUint8(finalData);
+		digitalWrite(TFT_CS_2, LOW);
+		display.setTextDatum(6);
+		tempWidth = display.textWidth("9", 6);
+		display.setTextPadding(tempWidth);
+		display.drawFloat(gear, 0, 240, 6);
+		digitalWrite(TFT_CS_2, HIGH);
+		delay(timeWait);
 
 		writeOBDsave("0143", 2, 0.392, 0); //par motor (absoluto) -provisional-
 		tLoad = finalData;
-
-		writeOBDsave("010A", 1, 3.0, 0); //presión fuel
-		pFuel = floatToUint16(finalData);
+		digitalWrite(TFT_CS_2, LOW);
+		display.setTextDatum(5);
+		tempWidth = display.textWidth("999", 4);
+		display.setTextPadding(tempWidth);
+		display.drawFloat(tLoad, 180, 200, 4);
+		digitalWrite(TFT_CS_2, HIGH);
+		delay(timeWait);
 	}
 }
 
