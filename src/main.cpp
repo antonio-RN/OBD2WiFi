@@ -418,6 +418,9 @@ void exeMode(uint8_t desiredMode = 1) {
 }
 
 void setup() {
+	pinMode(TFT_CS_1, OUTPUT);
+ 	pinMode(TFT_CS_2, OUTPUT);
+	
 	Serial.begin(115200);
 	Serial.println();
 	Serial.println("#OBD2WiFi#");
